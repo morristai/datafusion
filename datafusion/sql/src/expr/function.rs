@@ -262,21 +262,7 @@ impl<S: ContextProvider> SqlToRel<'_, S> {
         // required ordering should be defined in OVER clause.
         let is_function_window = over.is_some();
         let sql_parser_span = object_name.0[0].span();
-        let name = if object_name.0.len() > 1 {
-            // DF doesn't handle compound identifiers
-            // (e.g. "foo.bar") for function names yet
-            object_name.to_string()
-        } else {
-            match object_name.0[0].as_ident() {
-                Some(ident) => crate::utils::normalize_ident(ident.clone()),
-                None => {
-                    return plan_err!(
-                        "Expected an identifier in function name, but found {:?}",
-                        object_name.0[0]
-                    );
-                }
-            }
-        };
+        let name = crate::utils::function_name_to_string(&object_name)?;
 
         // handle make_map and map functions
         // make_map always uses plan_make_map: make_map(k1, v1, k2, v2, ...)

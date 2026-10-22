@@ -1696,6 +1696,12 @@ impl SessionContext {
     }
 
     /// Register a table UDF with this context
+    ///
+    /// Note in SQL queries, table function names are looked up using
+    /// lowercase unless the query uses quotes. For example,
+    ///
+    /// - `SELECT * FROM MY_FUNC(x)` will look for a function named `"my_func"`
+    /// - `SELECT * FROM "my_FUNC"(x)` will look for a function named `"my_FUNC"`
     pub fn register_udtf(&self, name: &str, fun: Arc<dyn TableFunctionImpl>) {
         self.state.write().register_udtf(name, fun)
     }

@@ -783,6 +783,29 @@ SELECT c, f.*  FROM json_table, LATERAL generate_series(1,2) f;
 2 1
 2 2
 
+# Table function names resolve like scalar function names: a single-part name
+# is normalized and a qualified name is looked up as written
+query I
+SELECT * FROM GENERATE_SERIES(1, 2)
+----
+1
+2
+
+query I
+SELECT * FROM "generate_series"(1, 2)
+----
+1
+2
+
+statement error DataFusion error: Error during planning: table function 'GENERATE_SERIES' not found
+SELECT * FROM "GENERATE_SERIES"(1, 2)
+
+statement error DataFusion error: Error during planning: table function 'public\.generate_series' not found
+SELECT * FROM public.generate_series(1, 2)
+
+statement error DataFusion error: Error during planning: table function 'public\.generate_series' not found
+SELECT c, f.* FROM json_table, LATERAL public.generate_series(1, 2) f;
+
 
 # Test generate_series in a recursive CTE to ensure the state is correctly reset
 query I rowsort

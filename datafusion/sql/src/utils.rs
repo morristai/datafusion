@@ -39,7 +39,7 @@ use datafusion_expr::{
 };
 
 use indexmap::IndexMap;
-use sqlparser::ast::{Ident, Value};
+use sqlparser::ast::{Ident, ObjectName, Value};
 
 /// Make a best-effort attempt at resolving all columns in the expression tree
 pub(crate) fn resolve_columns(expr: &Expr, plan: &LogicalPlan) -> Result<Expr> {
@@ -361,6 +361,24 @@ pub(crate) fn normalize_ident(id: Ident) -> String {
     match id.quote_style {
         Some(_) => id.value,
         None => id.value.to_ascii_lowercase(),
+    }
+}
+
+/// Returns the name used to look up the function called as `name`.
+///
+/// A single-part name is normalized with [`normalize_ident`]. A multi-part
+/// name is returned as written.
+pub(crate) fn function_name_to_string(name: &ObjectName) -> Result<String> {
+    match name.0.as_slice() {
+        [part] => match part.as_ident() {
+            Some(ident) => Ok(normalize_ident(ident.clone())),
+            None => {
+                plan_err!("Expected an identifier in function name, but found {part:?}")
+            }
+        },
+        // DF doesn't handle compound identifiers
+        // (e.g. "foo.bar") for function names yet
+        _ => Ok(name.to_string()),
     }
 }
 

@@ -133,6 +133,12 @@ SELECT CONCAT('Hello', 'World')
 ----
 HelloWorld
 
+query II
+SELECT * FROM GENERATE_SERIES(1, 1) a, LATERAL GENERATE_SERIES(1, 2) b
+----
+1 1
+1 2
+
 # Restore default setting
 statement ok
 set datafusion.sql_parser.enable_ident_normalization = true;

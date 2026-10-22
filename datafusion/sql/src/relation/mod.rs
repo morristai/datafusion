@@ -164,8 +164,7 @@ impl<S: ContextProvider> SqlToRel<'_, S> {
                 name, alias, args, ..
             } => {
                 if let Some(func_args) = args {
-                    let tbl_func_name =
-                        name.0.first().unwrap().as_ident().unwrap().to_string();
+                    let tbl_func_name = crate::utils::function_name_to_string(&name)?;
                     let args = func_args
                         .args
                         .into_iter()
@@ -277,7 +276,7 @@ impl<S: ContextProvider> SqlToRel<'_, S> {
             TableFactor::Function {
                 name, args, alias, ..
             } => {
-                let tbl_func_ref = self.object_name_to_table_reference(name)?;
+                let tbl_func_name = crate::utils::function_name_to_string(&name)?;
                 let schema = planner_context
                     .outer_queries_schemas()
                     .last()
@@ -298,9 +297,9 @@ impl<S: ContextProvider> SqlToRel<'_, S> {
                     .collect::<Result<Vec<Expr>>>()?;
                 let provider = self
                     .context_provider
-                    .get_table_function_source(tbl_func_ref.table(), func_args)?;
+                    .get_table_function_source(&tbl_func_name, func_args)?;
                 let plan =
-                    LogicalPlanBuilder::scan(tbl_func_ref.table(), provider, None)?
+                    LogicalPlanBuilder::scan(tbl_func_name.as_str(), provider, None)?
                         .build()?;
                 (plan, alias)
             }
